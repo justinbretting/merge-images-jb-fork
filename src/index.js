@@ -27,7 +27,6 @@ const mergeImages = (sources = [], options = {}) => new Promise(resolve => {
 	if (options.Canvas) {
 		options.quality *= 100;
 	}
-
 	// Load sources
 	const images = sources.map(source => new Promise((resolve, reject) => {
 		// Convert sources to objects
@@ -38,7 +37,7 @@ const mergeImages = (sources = [], options = {}) => new Promise(resolve => {
 		if (source.width && source.height) {
 			const img = new Image(source.width, source.height);
 
-			img.onerror = () => reject(new Error('Couldn\'t load image'));
+			img.onerror = () => reject(new Error(`Couldn\'t load image ${source.src}`));
 			img.onload = () => {
 				const { width, height } = source;
 				const canvas = createCanvas(options);
@@ -50,7 +49,7 @@ const mergeImages = (sources = [], options = {}) => new Promise(resolve => {
 
 				// Adjust source image width and height
 				const resizeImg = new Image();
-				resizeImg.onerror = () => reject(new Error('Couldn\'t load image'));
+				resizeImg.onerror = () => reject(new Error(`Error resizing image ${source.src}`));
 				resizeImg.onload = () => resolve(Object.assign({}, source, { img: resizeImg }));
 				resizeImg.src = canvas.toDataURL();
 			};
@@ -58,7 +57,7 @@ const mergeImages = (sources = [], options = {}) => new Promise(resolve => {
 		} else {
       // Resolve source and img when loaded
 			const img = new Image();
-			img.onerror = () => reject(new Error('Couldn\'t load image'));
+			img.onerror = () => reject(new Error(`Couldn\'t load image ${source.src}`));
 			img.onload = () => resolve(Object.assign({}, source, { img }));
 			img.src = source.src;
 		}
@@ -74,6 +73,11 @@ const mergeImages = (sources = [], options = {}) => new Promise(resolve => {
 			const getSize = dim => options[dim] || Math.max(...images.map(image => image.img[dim]));
 			canvas.width = getSize('width');
 			canvas.height = getSize('height');
+
+			if ( options.backgroundColor ) {
+				ctx.fillStyle = options.backgroundColor;
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+			}
 
 			// Draw images to canvas
 			images.forEach(image => {
